@@ -626,8 +626,6 @@ static float Score_Retreat( cast_state_t *cs ) {
 	// low morale pushes retreat
 	score += ( 1.0f - cs->morale ) * 0.3f;
 
-	AICast_Comm_BroadcastMessage( cs, COMM_RETREATING, g_entities[cs->entityNum].r.currentOrigin, cs->enemyNum );
-
 	if ( score < 0.0f ) {
 		score = 0.0f;
 	}
@@ -635,6 +633,8 @@ static float Score_Retreat( cast_state_t *cs ) {
 }
 
 static qboolean Execute_Retreat( cast_state_t *cs ) {
+	// broadcast retreat intent
+	AICast_Comm_BroadcastMessage( cs, COMM_RETREATING, g_entities[cs->entityNum].r.currentOrigin, cs->enemyNum );
 	// retreat is implemented as take cover with high priority
 	AIFunc_BattleTakeCoverStart( cs );
 	return qtrue;
