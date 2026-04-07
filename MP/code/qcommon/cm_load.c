@@ -209,7 +209,11 @@ void CMod_LoadNodes( lump_t *l ) {
 
 	for ( i = 0 ; i < count ; i++, out++, in++ )
 	{
-		out->plane = cm.planes + LittleLong( in->planeNum );
+		int planeNum = LittleLong( in->planeNum );
+		if ( planeNum < 0 || planeNum >= cm.numPlanes ) {
+			Com_Error( ERR_DROP, "CMod_LoadNodes: bad planeNum: %i", planeNum );
+		}
+		out->plane = cm.planes + planeNum;
 		for ( j = 0 ; j < 2 ; j++ )
 		{
 			child = LittleLong( in->children[j] );
@@ -442,6 +446,9 @@ void CMod_LoadBrushSides( lump_t *l ) {
 
 	for ( i = 0 ; i < count ; i++, in++, out++ ) {
 		num = LittleLong( in->planeNum );
+		if ( num < 0 || num >= cm.numPlanes ) {
+			Com_Error( ERR_DROP, "CMod_LoadBrushSides: bad planeNum: %i", num );
+		}
 		out->plane = &cm.planes[num];
 		out->shaderNum = LittleLong( in->shaderNum );
 		if ( out->shaderNum < 0 || out->shaderNum >= cm.numShaders ) {
