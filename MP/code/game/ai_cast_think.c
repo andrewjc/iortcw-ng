@@ -61,6 +61,28 @@ void AICast_ProcessAIFunctions( cast_state_t *cs, float thinktime ) {
 
 	//check for air
 	BotCheckAir( cs->bs );
+
+	// AI Uplift: process communication messages
+	AICast_Comm_ProcessMessages( cs );
+
+	// AI Uplift: update morale
+	AICast_UpdateMorale( cs );
+
+	// AI Uplift: update suppression state
+	AICast_UpdateSuppression( cs );
+
+	// AI Uplift: record enemy position history for prediction
+	AICast_RecordEnemyPos( cs );
+
+	// AI Uplift: try the utility-based planner first (when enabled and in combat)
+	if ( ai_planner.integer && cs->aiState >= AISTATE_COMBAT &&
+		 !( cs->aiFlags & AIFL_SPECIAL_FUNC ) ) {
+		if ( AICast_Planner_Think( cs ) ) {
+			// planner selected and executed an action, it set the aifunc
+			// fall through to execute it below
+		}
+	}
+
 	//if the cast has no ai function
 	if ( !cs->aifunc ) {
 		AIFunc_DefaultStart( cs );
@@ -754,6 +776,9 @@ void AICast_StartFrame( int time ) {
 	trap_Cvar_Update( &aicast_debug );
 	trap_Cvar_Update( &aicast_debugname );
 	trap_Cvar_Update( &aicast_scripts );
+
+	// AI Uplift: update squad system each frame
+	AICast_Squad_Update();
 
 	// no need to think during the intermission
 	if ( level.intermissiontime ) {

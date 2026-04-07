@@ -2573,6 +2573,12 @@ Q3GOBJ_ = \
   $(B)/$(BASEGAME)/game/ai_cast_script_ents.o \
   $(B)/$(BASEGAME)/game/ai_cast_sight.o \
   $(B)/$(BASEGAME)/game/ai_cast_think.o \
+  $(B)/$(BASEGAME)/game/ai_cast_planner.o \
+  $(B)/$(BASEGAME)/game/ai_cast_cover.o \
+  $(B)/$(BASEGAME)/game/ai_cast_comm.o \
+  $(B)/$(BASEGAME)/game/ai_cast_squad.o \
+  $(B)/$(BASEGAME)/game/ai_cast_tactics.o \
+  $(B)/$(BASEGAME)/game/ai_cast_enhance.o \
   $(B)/$(BASEGAME)/game/ai_chat.o \
   $(B)/$(BASEGAME)/game/ai_cmd.o \
   $(B)/$(BASEGAME)/game/ai_dmnet.o \

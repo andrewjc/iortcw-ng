@@ -501,7 +501,25 @@ void AICast_Init( void ) {
 	memset( caststates, 0, sizeof( *caststates ) );
 	for ( i = 0; i < MAX_CLIENTS; i++ ) {
 		caststates[i].entityNum = i;
+		// AI Uplift: initialize new fields
+		caststates[i].squadId = SQUAD_NONE;
+		caststates[i].squadRole = ROLE_NONE;
+		caststates[i].morale = 1.0f;
+		caststates[i].difficultyScale = 1.0f;
+		caststates[i].suppressedUntil = 0;
+		caststates[i].patrolOriginSet = qfalse;
+		caststates[i].enemyPosHistoryIndex = 0;
+		caststates[i].tacticState.type = TACTIC_NONE;
+		caststates[i].tacticState.phase = TACTIC_PHASE_NONE;
+		memset( &caststates[i].plannerState, 0, sizeof( ai_planner_state_t ) );
 	}
+
+	// AI Uplift: initialize subsystems
+	AICast_Planner_Init();
+	AICast_Cover_Init();
+	AICast_Comm_Init();
+	AICast_Squad_Init();
+	AICast_Tactics_Init();
 
 /* RF, this is useless, since the AAS hasnt been loaded yet
 	// try and load in the AAS now, so we can interact with it during spawning of entities
