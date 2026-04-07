@@ -36,8 +36,6 @@ void QDECL Com_Error(int level, const char *fmt, ...) {
 
 	fprintf(stderr, "Com_Error(%d): %s\n", level, msg);
 
-	/* Engine marks this noreturn but tests need to continue for non-fatal errors.
-	   Fatal errors must exit. */
-	(void)level;
+	/* Engine marks this noreturn - always exit in test context. */
 	exit(1);
 }
