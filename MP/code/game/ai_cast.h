@@ -38,6 +38,11 @@ If you have questions concerning this license or the applicable additional terms
 #include "ai_dmq3.h"    // just so we can use the structures
 
 #include "ai_cast_fight.h"
+#include "ai_cast_planner.h"
+#include "ai_cast_cover.h"
+#include "ai_cast_comm.h"
+#include "ai_cast_squad.h"
+#include "ai_cast_tactics.h"
 
 //
 // constants/defines
@@ -93,6 +98,8 @@ If you have questions concerning this license or the applicable additional terms
 #define AIFL_NO_HEADSHOT_DMG    0x400000
 #define AIFL_DIVE_ANIM          0x800000    // able to dive to cover
 #define AIFL_NO_TESLA_DAMAGE    0x1000000
+#define AIFL_SPECIAL_FUNC       0x2000000   // prevent external interruption of current think func
+#define AIFL_IN_COVER           0x4000000   // agent is currently in a cover position
 //
 // predict events
 typedef enum
@@ -530,6 +537,35 @@ typedef struct cast_state_s
 	// if working on a post release patch, new variables should ONLY be inserted after this point
 	// -------------------------------------------------------------------------------------------
 
+	// AI Uplift: Dynamic Planning
+	ai_planner_state_t plannerState;
+
+	// AI Uplift: Communication & Roles
+	aiRole_t    squadRole;              // current combat role assignment
+	int         squadId;                // id of squad this agent belongs to, SQUAD_NONE if none
+	int         lastCommProcessTime;    // last time we processed comm messages
+
+	// AI Uplift: Tactical state
+	ai_tactic_state_t tacticState;
+
+	// AI Uplift: Morale system
+	float       morale;                 // 0.0 (broken) to 1.0 (confident)
+	int         lastMoraleUpdateTime;
+
+	// AI Uplift: Memory & Prediction
+	vec3_t      enemyPosHistory[3];     // last 3 known enemy positions
+	int         enemyPosHistoryTime[3]; // timestamps for each position
+	int         enemyPosHistoryIndex;
+	vec3_t      patrolOrigin;           // original position to return to after combat
+	qboolean    patrolOriginSet;
+
+	// AI Uplift: Suppression state
+	int         suppressedUntil;        // don't fire until this time
+	float       suppressionResistance;  // derived from AGGRESSION
+
+	// AI Uplift: Adaptive difficulty
+	float       difficultyScale;        // multiplier applied to reaction/accuracy/tactical
+
 } cast_state_t;
 //
 #define CSFOFS( x ) ( (size_t)&( ( (cast_state_t *)0 )->x ) )
@@ -692,6 +728,13 @@ qboolean AICast_ScriptRun( cast_state_t *cs, qboolean force );
 //
 // ai_cast_soldier.c
 void    AIChar_spawn( gentity_t *ent );
+//
+// AI Uplift: morale, prediction, suppression, adaptive difficulty
+void    AICast_UpdateMorale( cast_state_t *cs );
+void    AICast_PredictEnemyPos( cast_state_t *cs, float timeAhead, vec3_t outPos );
+void    AICast_RecordEnemyPos( cast_state_t *cs );
+void    AICast_UpdateSuppression( cast_state_t *cs );
+void    AICast_UpdateAdaptiveDifficulty( void );
 //
 // other/external defines
 void    BotCheckAir( bot_state_t *bs );
