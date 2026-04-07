@@ -338,13 +338,21 @@ static int test_multiple_resolutions(void) {
  */
 static int test_renderer_dll_loading(void) {
 	/* Try to load the renderer shared library */
-	const char *renderer_path = "./renderer_sp_opengl1_x86_64.so";
-	void *lib = dlopen(renderer_path, RTLD_NOW);
+	const char *renderer_paths[] = {
+		"./renderer_sp_opengl1_x86_64.so",
+		"../../build/release-linux-x86_64/renderer_sp_opengl1_x86_64.so",
+		NULL
+	};
+	void *lib = NULL;
+	const char *loaded_path = NULL;
+	int i;
 
-	if (!lib) {
-		/* Try relative to build directory */
-		renderer_path = "../build/release-linux-x86_64/renderer_sp_opengl1_x86_64.so";
-		lib = dlopen(renderer_path, RTLD_NOW);
+	for (i = 0; renderer_paths[i] != NULL; i++) {
+		lib = dlopen(renderer_paths[i], RTLD_NOW);
+		if (lib) {
+			loaded_path = renderer_paths[i];
+			break;
+		}
 	}
 
 	if (!lib) {
@@ -359,7 +367,7 @@ static int test_renderer_dll_loading(void) {
 	void *sym = dlsym(lib, "GetRefAPI");
 	TEST_ASSERT(sym != NULL, "GetRefAPI symbol found in renderer DLL");
 
-	printf("\n    Renderer DLL loaded successfully from %s\n    ", renderer_path);
+	printf("\n    Renderer DLL loaded successfully from %s\n    ", loaded_path);
 
 	dlclose(lib);
 	return 1;

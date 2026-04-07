@@ -1964,6 +1964,9 @@ static	void R_LoadNodesAndLeafs (lump_t *nodeLump, lump_t *leafLump) {
 		}
 	
 		p = LittleLong(in->planeNum);
+		if ( p < 0 || p >= s_worldData.numplanes ) {
+			ri.Error( ERR_DROP, "R_LoadNodesAndLeafs: bad planeNum: %i", p );
+		}
 		out->plane = s_worldData.planes + p;
 
 		out->contents = CONTENTS_NODE;	// differentiate from leafs
@@ -1971,10 +1974,17 @@ static	void R_LoadNodesAndLeafs (lump_t *nodeLump, lump_t *leafLump) {
 		for (j=0 ; j<2 ; j++)
 		{
 			p = LittleLong (in->children[j]);
-			if (p >= 0)
+			if (p >= 0) {
+				if ( p >= numNodes + numLeafs ) {
+					ri.Error( ERR_DROP, "R_LoadNodesAndLeafs: bad child node index: %i", p );
+				}
 				out->children[j] = s_worldData.nodes + p;
-			else
+			} else {
+				if ( numNodes + (-1 - p) >= numNodes + numLeafs ) {
+					ri.Error( ERR_DROP, "R_LoadNodesAndLeafs: bad child leaf index: %i", p );
+				}
 				out->children[j] = s_worldData.nodes + numNodes + (-1 - p);
+			}
 		}
 	}
 	
@@ -2159,26 +2169,44 @@ static	void R_LoadFogs( lump_t *l, lump_t *brushesLump, lump_t *sidesLump ) {
 		// brushes are always sorted with the axial sides first
 		sideNum = firstSide + 0;
 		planeNum = LittleLong( sides[ sideNum ].planeNum );
+		if ( planeNum < 0 || planeNum >= s_worldData.numplanes ) {
+			ri.Error( ERR_DROP, "R_LoadFogs: bad planeNum: %i", planeNum );
+		}
 		out->bounds[0][0] = -s_worldData.planes[ planeNum ].dist;
 
 		sideNum = firstSide + 1;
 		planeNum = LittleLong( sides[ sideNum ].planeNum );
+		if ( planeNum < 0 || planeNum >= s_worldData.numplanes ) {
+			ri.Error( ERR_DROP, "R_LoadFogs: bad planeNum: %i", planeNum );
+		}
 		out->bounds[1][0] = s_worldData.planes[ planeNum ].dist;
 
 		sideNum = firstSide + 2;
 		planeNum = LittleLong( sides[ sideNum ].planeNum );
+		if ( planeNum < 0 || planeNum >= s_worldData.numplanes ) {
+			ri.Error( ERR_DROP, "R_LoadFogs: bad planeNum: %i", planeNum );
+		}
 		out->bounds[0][1] = -s_worldData.planes[ planeNum ].dist;
 
 		sideNum = firstSide + 3;
 		planeNum = LittleLong( sides[ sideNum ].planeNum );
+		if ( planeNum < 0 || planeNum >= s_worldData.numplanes ) {
+			ri.Error( ERR_DROP, "R_LoadFogs: bad planeNum: %i", planeNum );
+		}
 		out->bounds[1][1] = s_worldData.planes[ planeNum ].dist;
 
 		sideNum = firstSide + 4;
 		planeNum = LittleLong( sides[ sideNum ].planeNum );
+		if ( planeNum < 0 || planeNum >= s_worldData.numplanes ) {
+			ri.Error( ERR_DROP, "R_LoadFogs: bad planeNum: %i", planeNum );
+		}
 		out->bounds[0][2] = -s_worldData.planes[ planeNum ].dist;
 
 		sideNum = firstSide + 5;
 		planeNum = LittleLong( sides[ sideNum ].planeNum );
+		if ( planeNum < 0 || planeNum >= s_worldData.numplanes ) {
+			ri.Error( ERR_DROP, "R_LoadFogs: bad planeNum: %i", planeNum );
+		}
 		out->bounds[1][2] = s_worldData.planes[ planeNum ].dist;
 
 		// get information from the shader for fog parameters
@@ -2199,8 +2227,15 @@ static	void R_LoadFogs( lump_t *l, lump_t *brushesLump, lump_t *sidesLump ) {
 		if ( sideNum == -1 ) {
 			out->hasSurface = qfalse;
 		} else {
+			int idx = firstSide + sideNum;
+			if ( idx < 0 || idx >= sidesCount ) {
+				ri.Error( ERR_DROP, "R_LoadFogs: bad visible side index: %i", idx );
+			}
 			out->hasSurface = qtrue;
-			planeNum = LittleLong( sides[ firstSide + sideNum ].planeNum );
+			planeNum = LittleLong( sides[ idx ].planeNum );
+			if ( planeNum < 0 || planeNum >= s_worldData.numplanes ) {
+				ri.Error( ERR_DROP, "R_LoadFogs: bad planeNum: %i", planeNum );
+			}
 			VectorSubtract( vec3_origin, s_worldData.planes[ planeNum ].normal, out->surface );
 			out->surface[3] = -s_worldData.planes[ planeNum ].dist;
 		}
