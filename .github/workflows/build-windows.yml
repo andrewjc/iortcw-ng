@@ -1,0 +1,84 @@
+name: Build Windows Binaries
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86, x86_64]
+        game: [SP, MP]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install mingw-w64 cross-compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64
+
+      - name: Build ${{ matrix.game }} (${{ matrix.arch }})
+        working-directory: ${{ matrix.game }}
+        run: |
+          chmod +x cross-make-mingw.sh cross-make-mingw64.sh
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            ./cross-make-mingw64.sh release
+          else
+            ./cross-make-mingw.sh release
+          fi
+
+      - name: Gather build output
+        run: |
+          BUILD_DIR="${{ matrix.game }}/build/release-mingw32-${{ matrix.arch }}"
+          ARTIFACT_DIR="artifacts/${{ matrix.game }}-${{ matrix.arch }}"
+          mkdir -p "${ARTIFACT_DIR}"
+
+          # Copy all built executables and shared libraries
+          find "${BUILD_DIR}" -maxdepth 1 \( -name '*.exe' -o -name '*.dll' \) -exec cp {} "${ARTIFACT_DIR}/" \;
+
+          # Copy game module shared libraries from the main/ subdirectory
+          if [ -d "${BUILD_DIR}/main" ]; then
+            mkdir -p "${ARTIFACT_DIR}/main"
+            find "${BUILD_DIR}/main" -name '*.dll' -exec cp {} "${ARTIFACT_DIR}/main/" \;
+          fi
+
+      - name: Upload ${{ matrix.game }} ${{ matrix.arch }} binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: iortcw-${{ matrix.game }}-windows-${{ matrix.arch }}
+          path: artifacts/${{ matrix.game }}-${{ matrix.arch }}/
+
+  package:
+    runs-on: ubuntu-latest
+    needs: build-windows
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4.1.7
+        with:
+          path: all-artifacts
+
+      - name: Create combined package
+        run: |
+          mkdir -p package
+          for dir in all-artifacts/iortcw-*; do
+            component=$(basename "$dir")
+            cp -r "$dir" "package/${component}"
+          done
+
+      - name: Upload combined package
+        uses: actions/upload-artifact@v4
+        with:
+          name: iortcw-windows-all
+          path: package/
